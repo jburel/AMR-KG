@@ -15,9 +15,39 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - name: repo2docker install
+      - name: Set variable
+        id: nopush
+        run:  |
+          if [[ ${{ github.ref }} =~ 'refs/tags/' ]]; then
+            echo "::set-output name=nopush::"
+          else
+            echo "::set-output name=nopush::true"
+          fi
+        shell: bash
+      - name: Set image name
+        id: reponame
         run: |
-          pip install six
-          pip install --upgrade jupyter-repo2docker
-      - name: Build container
-        run: repo2docker --no-run .
+          echo "::set-output name=reponame::$(echo ${{ github.repository }} |  tr '[:upper:]' '[:lower:]')"
+        shell: bash
+      - name: Get the version
+        if: startsWith(github.ref, 'refs/tags')
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      #- name: Build
+      #  if: ${{ steps.nopush.outputs.nopush != true }}
+      #  uses: jupyterhub/repo2docker-action@master
+      #  with:
+      #    NO_PUSH: ${{ steps.nopush.outputs.nopush }}
+      #    ADDITIONAL_TAG: ${{ steps.get_version.outputs.VERSION }}
+      #   IMAGE_NAME: ${{ steps.reponame.outputs.reponame }}
+      - name: Build and push to dockerhub
+        #if: ${{ steps.nopush.outputs.nopush == true }}
+        uses: jupyterhub/repo2docker-action@master
+        with:
+          #NO_PUSH: ${{ steps.nopush.outputs.nopush }}
+          BINDER_CACHE: true
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          PUBLIC_REGISTRY_CHECK: true
+          ADDITIONAL_TAG: ${{ steps.get_version.outputs.VERSION }}
+          IMAGE_NAME: ${{ steps.reponame.outputs.reponame }}
