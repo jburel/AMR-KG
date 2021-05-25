@@ -34,7 +34,14 @@ jobs:
         id: get_version
         run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
       - name: update jupyter dependencies with repo2docker
-        if: ${{ steps.nopush.outputs.nopush }}
+        if: ${{ steps.nopush.outputs.nopush != true }}
+        uses: jupyterhub/repo2docker-action@master
+        with:
+          NO_PUSH: ${{ steps.nopush.outputs.nopush }}
+          ADDITIONAL_TAG: ${{ steps.get_version.outputs.VERSION }}
+          IMAGE_NAME: ${{ steps.reponame.outputs.reponame }}
+      - name: update jupyter dependencies with repo2docker
+        if: ${{ steps.nopush.outputs.nopush == true }}
         uses: jupyterhub/repo2docker-action@master
         with:
           #NO_PUSH: ${{ steps.nopush.outputs.nopush }}
