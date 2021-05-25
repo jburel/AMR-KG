@@ -24,6 +24,11 @@ jobs:
             echo "::set-output name=nopush::true"
           fi
         shell: bash
+      - name: Set image name
+        id: reponame
+        run: |
+          echo "::set-output name=reponame::$(echo ${{ github.repository }} |  tr '[:upper:]' '[:lower:]')"
+        shell: bash
       - name: Get the version
         if: startsWith(github.ref, 'refs/tags')
         id: get_version
@@ -36,5 +41,6 @@ jobs:
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           PUBLIC_REGISTRY_CHECK: true
           ADDITIONAL_TAG: ${{ steps.get_version.outputs.VERSION }}
-          IMAGE_NAME: ${{ github.repository }}
+          IMAGE_NAME: ${{ steps.reponame.outputs.reponame }}
+
 
